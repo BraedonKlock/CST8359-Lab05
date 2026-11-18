@@ -1,28 +1,23 @@
-using Assignment1.Data;
-using Assignment1.Services;
+using Lab05WebApi.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// Register API controllers.
+builder.Services.AddControllers();
 
-// Register Entity Framework Core with Azure SQL Database.
-// Retry connections when Azure SQL is temporarily unavailable.
+// Configure Entity Framework Core with SQL Server LocalDB.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 10,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null)));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register Azure Blob Storage service.
-builder.Services.AddScoped<BlobStorageService>();
+// Register Swagger services.
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Initialize the database and seed initial data.
+// Create the database and seed initial data.
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider
@@ -31,22 +26,15 @@ using (var scope = app.Services.CreateScope())
     await DbInitializer.InitializeAsync(context);
 }
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// Enable Swagger.
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 app.Run();

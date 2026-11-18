@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Assignment1.Models;
+namespace Lab05WebApi.Models;
 
 public class Event
 {
